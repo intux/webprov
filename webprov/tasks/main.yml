@@ -15,13 +15,27 @@
   loop_control:
     label: "/var/www/{{ hostname }}{{ item }}"
 
+#- name: Create system user
+#  user:
+#    name: "{{ hostname | replace('.','_') }}"
+#    uid: 33
+#    gid: 33
+
 - name: Create Apache2 configuration
   template:
     src: apache2.conf
-    dest: /etc/apache2/sites-available/{{ hostname }}
+    dest: /etc/apache2/sites-available/{{ hostname }}.conf
     owner: root
     group: root
     mode: '0644'
+
+- name: Enable Apache2 configuration
+  file:
+    src: /etc/apache2/sites-available/{{ hostname }}.conf
+    dest: /etc/apache2/sites-enabled/{{ hostname }}.conf
+    owner: root
+    group: root
+    state: link
 
 - name: Create PHP-FPM configuration
   template:
@@ -42,7 +56,7 @@
     name: "{{ hostname }}"
     image: "intux/php:{{ php }}"
     user: www-data
-    command: ["php-fpm{{ php }}", "-F", "-y", "/var/www/{{ hostname }}/etc/php-fpm.conf"]
+    command: ["/usr/sbin/php-fpm{{ php }}", "-F", "-y", "/var/www/{{ hostname }}/etc/php-fpm.conf"]
     network_mode: host
     pull: yes
     restart_policy: always
