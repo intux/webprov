@@ -1,2 +1,3 @@
 ---
-# handlers file for webprov
+- name: restart apache2
+  service: name=apache2 state=restarted
