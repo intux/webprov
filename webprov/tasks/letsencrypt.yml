@@ -1,0 +1,12 @@
+---
+- name: Add hostname to Dehydrated
+  lineinfile:
+    path: /etc/dehydrated/domains.txt
+    regexp: "^{{ hostname }}"
+    line: "{{ hostname }}"
+  register: domains
+
+- name: Run Dehydrated
+  command: "/usr/sbin/dehydrated -c -g -k /etc/letsencrypt/hooks.sh --domain {{ hostname }}"
+  when:
+    domains.changed

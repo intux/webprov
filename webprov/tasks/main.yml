@@ -1,0 +1,55 @@
+---
+- name: Create needed directories
+  file:
+    path: "/var/www/{{ hostname }}{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: www-data
+    group: www-data
+  with_items:
+    - /
+    - /etc
+    - /run
+    - /logs
+    - /wwwroot
+  loop_control:
+    label: "/var/www/{{ hostname }}{{ item }}"
+
+- name: Create Apache2 configuration
+  template:
+    src: apache2.conf
+    dest: /etc/apache2/sites-available/{{ hostname }}
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create PHP-FPM configuration
+  template:
+    src: php-fpm.conf
+    dest: /var/www/{{ hostname }}/etc/php-fpm.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create local configuration files
+  copy:
+    content: ""
+    dest: "/var/www/{{ hostname }}/etc/php-fpm.local"
+    force: no
+
+- name: Start Docker container for PHP-FPM
+  docker_container:
+    name: "{{ hostname }}"
+    image: "intux/php:{{ php }}"
+    user: www-data
+    command: ["php-fpm{{ php }}", "-F", "-y", "/var/www/{{ hostname }}/etc/php-fpm.conf"]
+    network_mode: host
+    pull: yes
+    restart_policy: always
+    volumes:
+      - "/var/www/{{ hostname }}:/var/www/{{ hostname }}"
+
+- include: "letsencrypt.yml"
+  when: letsencrypt
+
+
