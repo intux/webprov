@@ -1,5 +1,13 @@
 ---
-- name: Create needed directories
+- name: Create root directory
+  file:
+    path: "/var/www/{{ hostname }}"
+    state: directory
+    mode: '0750'
+    owner: root
+    group: www-data
+
+- name: Create subdirectories
   file:
     path: "/var/www/{{ hostname }}{{ item }}"
     state: directory
@@ -7,7 +15,7 @@
     owner: www-data
     group: www-data
   with_items:
-    - /
+    - /.ssh
     - /etc
     - /run
     - /logs
@@ -15,11 +23,14 @@
   loop_control:
     label: "/var/www/{{ hostname }}{{ item }}"
 
-#- name: Create system user
-#  user:
-#    name: "{{ hostname | replace('.','_') }}"
-#    uid: 33
-#    gid: 33
+- name: Create user
+  user:
+    name: "{{ hostname | replace('.','_') }}"
+    uid: 33
+    group: www-data
+    non_unique: yes
+    home: "/var/www/{{ hostname }}"
+    shell: /bin/bash
 
 - name: Create Apache2 configuration
   template:
